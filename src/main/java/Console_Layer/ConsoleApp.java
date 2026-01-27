@@ -1,6 +1,6 @@
 package Console_Layer;
 
-import Query_Layer.*;
+import query_layer.*;
 import core.*;
 
 import java.io.BufferedReader;

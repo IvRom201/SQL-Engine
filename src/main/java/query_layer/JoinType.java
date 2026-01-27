@@ -1,4 +1,4 @@
-package Query_Layer;
+package query_layer;
 
 public enum JoinType {
     INNER,
