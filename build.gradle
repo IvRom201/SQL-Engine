@@ -1,7 +1,8 @@
 plugins {
     id 'java'
-    id 'application'
     id 'idea'
+    id 'org.springframework.boot' version '3.5.10'
+    id 'io.spring.dependency-management' version '1.1.7'
 }
 
 group = 'com.minidb'
@@ -9,12 +10,8 @@ version = '1.0.0'
 
 java {
     toolchain {
-        languageVersion = JavaLanguageVersion.of(22)
+        languageVersion = JavaLanguageVersion.of(21)
     }
-}
-
-application {
-    mainClass = 'com.minidb.Main'
 }
 
 repositories {
@@ -22,38 +19,27 @@ repositories {
 }
 
 dependencies {
-    implementation 'org.slf4j:slf4j-api:2.0.13'
-    implementation 'ch.qos.logback:logback-classic:1.5.6'
+    implementation 'org.springframework.boot:spring-boot-starter-web'
 
-    implementation 'com.fasterxml.jackson.core:jackson-databind:2.17.1'
-    implementation 'com.fasterxml.jackson.dataformat:jackson-dataformat-csv:2.17.1'
+    implementation 'com.fasterxml.jackson.dataformat:jackson-dataformat-csv'
 
-    testImplementation 'org.junit.jupiter:junit-jupiter-api:5.10.3'
-    testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.10.3'
+    implementation 'org.apache.commons:commons-lang3'
 
-    implementation 'org.apache.commons:commons-lang3:3.18.0'
+    testImplementation 'org.springframework.boot:spring-boot-starter-test'
 }
 
 tasks.withType(JavaCompile).configureEach {
     options.encoding = 'UTF-8'
-    options.release = 22
 }
 
 test {
     useJUnitPlatform()
-    testLogging {
-        events "passed", "failed", "skipped"
-    }
 }
 
-jar {
-    manifest {
-        attributes(
-                'Main-Class': 'com.minidb.Main'
-        )
-    }
-}
-
-tasks.named('run') {
+tasks.register('runConsole', JavaExec) {
+    group = 'application'
+    description = 'Run console app'
+    classpath = sourceSets.main.runtimeClasspath
+    mainClass = 'Console_Layer.ConsoleApp'
     standardInput = System.in
 }
