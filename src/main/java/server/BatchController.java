@@ -4,20 +4,20 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-import server.dto.QueryRequest;
-import server.dto.QueryResponse;
+import server.dto.BatchRequest;
+import server.dto.BatchResponse;
 
 @RestController
-@RequestMapping("/api")
-public class SqlController {
+@RequestMapping
+public class BatchController {
     private final SqlEngineService engine;
 
-    public SqlController(SqlEngineService engine) {
+    public BatchController(SqlEngineService engine) {
         this.engine = engine;
     }
 
-    @PostMapping("/query")
-    public QueryResponse query(@RequestBody QueryRequest req) {
-        return engine.execute(req.sql());
+    @PostMapping("/batch")
+    public BatchResponse batch(@RequestBody BatchRequest req) {
+        return engine.executeBatch(req);
     }
 }

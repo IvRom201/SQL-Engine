@@ -1,5 +1,3 @@
 package server.dto;
 
-public class QueryRequest {
-    public String sql;
-}
+public record QueryRequest (String sql){}

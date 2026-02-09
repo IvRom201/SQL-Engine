@@ -74,7 +74,6 @@ public class SqlDispatcher {
         Query<Row> q = parser.parse(sql, db);
         List<Row> result = executor.execute(q);
 
-        // если SELECT * -> selectedColumns пустой список
         List<String> cols = q.getSelectedColumns();
         if (cols == null || cols.isEmpty()) {
             cols = q.getTable().getColumns().stream().map(Column::getColumnName).toList();
@@ -85,10 +84,7 @@ public class SqlDispatcher {
             typeByCol.put(c.getColumnName(), c.getColumnType());
         }
 
-        QueryResponse resp = new QueryResponse();
-        resp.kind = "RESULT_SET";
-        resp.message = "OK";
-        resp.columns = cols.stream()
+        List<ColumnDto> columns = cols.stream()
                 .map(c -> new ColumnDto(c, String.valueOf(typeByCol.getOrDefault(c, null))))
                 .toList();
 
@@ -101,8 +97,8 @@ public class SqlDispatcher {
             }
             rows.add(row);
         }
-        resp.rows = rows;
-        return resp;
+
+        return QueryResponse.result(columns, rows);
     }
 
     private QueryResponse handleCreate(Database db, String line){
@@ -131,11 +127,7 @@ public class SqlDispatcher {
 
         db.createTable(tableName, cols);
 
-        QueryResponse resp = new QueryResponse();
-        resp.kind = "UPDATE_COUNT";
-        resp.message = "Table created: " + tableName;
-        resp.affectedRows = 0;
-        return resp;
+        return QueryResponse.update("Table created: " + tableName, 0);
     }
 
     private QueryResponse handleAlterAdd(Database db, String line){
@@ -144,7 +136,7 @@ public class SqlDispatcher {
 
         String tableName = matcher.group(1);
         String col = matcher.group(2);
-        DataType type = DataType.valueOf(matcher.group().toUpperCase(Locale.ROOT));
+        DataType type = DataType.valueOf(matcher.group(3).toUpperCase(Locale.ROOT));
         boolean pk = matcher.group(4) != null;
 
         Table t = db.getTable(tableName);
@@ -152,11 +144,7 @@ public class SqlDispatcher {
         c.setPrimaryKey(pk);
         t.addColumn(c);
 
-        QueryResponse resp = new QueryResponse();
-        resp.kind = "UPDATE_COUNT";
-        resp.message = "Column added: " + tableName + "." + col;
-        resp.affectedRows = 0;
-        return resp;
+        return QueryResponse.update("Column " + col + " added to: " + tableName, 0);
     }
 
     private QueryResponse handleDrop(Database db, String line){
@@ -166,11 +154,7 @@ public class SqlDispatcher {
         String tableName = matcher.group(1);
         db.dropTable(tableName);
 
-        QueryResponse resp = new QueryResponse();
-        resp.kind = "UPDATE_COUNT";
-        resp.message = "Table dropped: " + tableName;
-        resp.affectedRows = 0;
-        return resp;
+        return QueryResponse.update("Dropped created: " + tableName, 0);
     }
 
     private QueryResponse handleInsert(Database db, String line){
@@ -202,18 +186,11 @@ public class SqlDispatcher {
         }
 
         t.insert(toInsert);
-        QueryResponse resp = new QueryResponse();
-        resp.kind = "UPDATE_COUNT";
-        resp.message = "1 row inserted into " + tableName;
-        resp.affectedRows = 1;
-        resp.columns = null;
-        resp.rows = null;
-        return resp;
-    }
+        return QueryResponse.update("1 row inserted into " + tableName, 1);    }
 
     private QueryResponse handleUpdate(Database db, String line){
         Matcher matcher = RE_UPDATE.matcher(line);
-        if (matcher.matches()) throw new IllegalArgumentException("Usage: UPDATE <name> SET col=val[, ...] [WHERE ...];");
+        if (!matcher.matches()) throw new IllegalArgumentException("Usage: UPDATE <name> SET col=val[, ...] [WHERE ...];");
 
         String tableName = matcher.group(1);
         String setSpec = matcher.group(2).trim();
@@ -232,7 +209,7 @@ public class SqlDispatcher {
             String lit = pair.substring(eq + 1).trim();
 
             Column schemaCol = t.getColumns().stream()
-                    .filter(c -> c.getColumnType().equals(col))
+                    .filter(c -> c.getColumnName().equals(col))
                     .findFirst()
                     .orElseThrow(() -> new IllegalArgumentException("Invalid column: " + col));
 
@@ -247,11 +224,7 @@ public class SqlDispatcher {
             changed = t.update(r -> true, newVals);
         }
 
-        QueryResponse resp = new QueryResponse();
-        resp.kind = "UPDATE_COUNT";
-        resp.message = changed + " row(s) updated";
-        resp.affectedRows = changed;
-        return resp;
+        return QueryResponse.update(changed + " row(s) updated in: " + tableName, changed);
     }
 
     private QueryResponse handleDelete(Database db, String line) {
@@ -271,11 +244,7 @@ public class SqlDispatcher {
             removed = t.delete(r -> true);
         }
 
-        QueryResponse resp = new QueryResponse();
-        resp.kind = "UPDATE_COUNT";
-        resp.message = removed + " row(s) deleted";
-        resp.affectedRows = removed;
-        return resp;
+        return QueryResponse.update(removed + " row(s) deleted in: " + tableName, removed);
     }
 
 
