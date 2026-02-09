@@ -1,9 +1,6 @@
 package server;
 
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import server.dto.QueryRequest;
 import server.dto.QueryResponse;
 
@@ -17,7 +14,7 @@ public class SqlController {
     }
 
     @PostMapping("/query")
-    public QueryResponse query(@RequestBody QueryRequest req) {
-        return engine.execute(req.sql());
+    public QueryResponse query(@RequestParam String sessionId, @RequestBody QueryRequest req) {
+        return engine.execute(sessionId, req.sql());
     }
 }

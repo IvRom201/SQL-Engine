@@ -13,43 +13,55 @@ import java.util.Set;
 
 @Service
 public class SqlEngineService {
-    private final Database db = new Database();
+    private final SessionManager sessions;
     private final SqlDispatcher dispatcher = new SqlDispatcher();
 
-    public synchronized QueryResponse execute(String sql) {
-        return dispatcher.execute(db, sql);
+    public SqlEngineService(SessionManager sessions) {
+        this.sessions = sessions;
     }
 
-    public Set<String> listTables() {
-        return db.listTables();
-    }
-
-    public Table getTableOrThrow(String name) {
-        try {
-            return db.getTable(name);
-        } catch (RuntimeException e) {
-            throw new NotFoundException(e.getMessage());
+    public QueryResponse execute(String sessionId, String sql) {
+        SessionManager.SessionState st = sessions.getOrThrow(sessionId);
+        synchronized (st) {
+            return dispatcher.execute(st.db, sql);
         }
     }
 
-    public synchronized BatchResponse executeBatch(BatchRequest req) {
-        boolean stopOnError = req.stopOnError() == null || req.stopOnError();
+    public BatchResponse executeBatch(String sessionId, BatchRequest req) {
+        SessionManager.SessionState st = sessions.getOrThrow(sessionId);
+        synchronized (st) {
+            boolean stopOnError = req.stopOnError() == null || req.stopOnError();
 
-        List<QueryResponse> results = new ArrayList<>();
-        int executed = 0;
-        int failed = 0;
+            var results = new ArrayList<QueryResponse>();
+            int executed = 0;
+            int failed = 0;
 
-        for (String s : req.sql()) {
-            try {
-                results.add(dispatcher.execute(db, s));
-                executed++;
-            } catch (Exception e) {
-                failed++;
-                results.add(QueryResponse.error(e.getMessage()));
-                if (stopOnError) break;
+            for (String s : req.sql()) {
+                try {
+                    results.add(dispatcher.execute(st.db, s));
+                    executed++;
+                } catch (Exception e) {
+                    failed++;
+                    results.add(QueryResponse.error(e.getMessage()));
+                    if (stopOnError) break;
+                }
             }
-        }
 
-        return new BatchResponse(executed, failed, results);
+            return new BatchResponse(executed, failed, results);
+        }
+    }
+
+    public Set<String> listTables(String sessionId) {
+        SessionManager.SessionState st = sessions.getOrThrow(sessionId);
+        synchronized (st) {
+            return st.db.listTables();
+        }
+    }
+
+    public Table getTableOrThrow(String sessionId, String tableName) {
+        SessionManager.SessionState st = sessions.getOrThrow(sessionId);
+        synchronized (st) {
+            return st.db.getTable(tableName);
+        }
     }
 }

@@ -1,9 +1,6 @@
 package server;
 
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import server.dto.BatchRequest;
 import server.dto.BatchResponse;
 
@@ -17,7 +14,7 @@ public class BatchController {
     }
 
     @PostMapping("/batch")
-    public BatchResponse batch(@RequestBody BatchRequest req) {
-        return engine.executeBatch(req);
+    public BatchResponse batch(@RequestParam String sessionId, @RequestBody BatchRequest req) {
+        return engine.executeBatch(sessionId, req);
     }
 }
