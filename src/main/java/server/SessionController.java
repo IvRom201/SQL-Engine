@@ -4,7 +4,7 @@ import org.springframework.web.bind.annotation.*;
 import server.dto.CreateSessionResponse;
 
 @RestController
-@RequestMapping
+@RequestMapping("/api")
 public class SessionController {
     private final SessionManager sessions;
 

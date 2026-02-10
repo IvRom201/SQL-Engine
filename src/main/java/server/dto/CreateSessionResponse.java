@@ -1,3 +1,3 @@
 package server.dto;
 
-public record CreateSessionResponse(String sesseionId) {}
+public record CreateSessionResponse(String sessionId) {}

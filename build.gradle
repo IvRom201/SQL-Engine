@@ -1,6 +1,8 @@
 plugins {
     id 'java'
     id 'idea'
+    id 'application'
+    id 'org.openjfx.javafxplugin' version '0.1.0'
     id 'org.springframework.boot' version '3.5.10'
     id 'io.spring.dependency-management' version '1.1.7'
 }
@@ -14,15 +16,25 @@ java {
     }
 }
 
-repositories {
-    mavenCentral()
+javafx {
+    version = "23.0.2"
+    modules = [ 'javafx.controls', 'javafx.fxml' ]
 }
+
+application {
+    mainClass = 'client.SqlClientApp'
+}
+
+springBoot {
+    mainClass = 'server.SqlEngineServerApplication'
+}
+
+repositories { mavenCentral() }
 
 dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-web'
-
+    implementation 'com.fasterxml.jackson.core:jackson-databind'
     implementation 'com.fasterxml.jackson.dataformat:jackson-dataformat-csv'
-
     implementation 'org.apache.commons:commons-lang3'
 
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
@@ -32,9 +44,7 @@ tasks.withType(JavaCompile).configureEach {
     options.encoding = 'UTF-8'
 }
 
-test {
-    useJUnitPlatform()
-}
+test { useJUnitPlatform() }
 
 tasks.register('runConsole', JavaExec) {
     group = 'application'
@@ -42,4 +52,14 @@ tasks.register('runConsole', JavaExec) {
     classpath = sourceSets.main.runtimeClasspath
     mainClass = 'Console_Layer.ConsoleApp'
     standardInput = System.in
+}
+
+tasks.withType(JavaExec).configureEach {
+    javaLauncher = javaToolchains.launcherFor {
+        languageVersion = JavaLanguageVersion.of(21)
+    }
+}
+
+tasks.named("bootRun") {
+    mainClass = "server.SqlEngineServerApplication"
 }
